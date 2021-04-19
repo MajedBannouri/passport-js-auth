@@ -16,6 +16,19 @@ mongoose.connect(DB_URI, {
   useUnifiedTopology: true,
 });
 
+const UserSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+});
+
+const user = mongoose.model("User", UserSchema);
+
 // Middleware
 app.engine("hbs", hbs({ extname: ".hbs" }));
 
@@ -31,3 +44,15 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+
+// Passport.js
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser(function (user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  // setup user Model
+});
