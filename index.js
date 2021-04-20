@@ -4,7 +4,7 @@ const hbs = require("express-handlebars");
 const mongoose = require("mongoose");
 const passport = require("passport");
 const dotenv = require("dotenv");
-const localStratrgy = require("passport-local").localStratrgy;
+const localStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const app = express();
 
@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
-const user = mongoose.model("User", UserSchema);
+const User = mongoose.model("User", UserSchema);
 
 // Middleware
 app.engine("hbs", hbs({ extname: ".hbs" }));
@@ -54,5 +54,28 @@ passport.serializeUser(function (user, done) {
 });
 
 passport.deserializeUser((id, done) => {
-  // setup user Model
+  User.findById(id, (err, user) => {
+    done(err, user);
+  });
+});
+
+passport.use(
+  new localStrategy(function (username, password, done) {
+    User.findOne({ username: username }, function (err, user) {
+      if (err) return done(err);
+      if (!user) return done(null, false, { message: "Incorrect username." });
+
+      bcrypt.compare(password, user.password, function (err, res) {
+        if (err) return done(err);
+        if (res === false)
+          return done(null, false, { message: "Incorrect password." });
+
+        return done(null, user);
+      });
+    });
+  })
+);
+
+app.listen(3000, () => {
+  console.log("Listening on port 3000");
 });
